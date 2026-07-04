@@ -1,0 +1,362 @@
+[
+  {
+    "type": "error",
+    "name": "InvalidOwner",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidSupply",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidMaxSupply",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "BuyTaxLimit",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SellTaxLimit",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TransferTaxLimit",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidSecurityConfig",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidPair",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TradingDisabled",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "Blacklisted",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "WhitelistRequired",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "AntiBotActive",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TradingDelay",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MaxTx",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MaxWallet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MintDisabled",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "MaxSupplyReached",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "BurnDisabled",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InsufficientVault",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NoTax",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidToken",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TransferFailed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "AlreadyEnabled",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "AlreadyLocked",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RenounceDisabled",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidTaxShares",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidMarketingWallet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidDevelopmentWallet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidTreasuryWallet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidLiquidityWallet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidBuybackWallet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidCharityWallet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotOwner",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotPendingOwner",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "FactoryPaused",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidDeployer",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidTreasury",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidExchange",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidPercent",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidDeployFee",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidPaymentToken",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "PaymentDisabled",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotNativePayment",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UseNativeDeploy",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InsufficientNativeFee",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ZeroUtilityTokenQuote",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UtilityTokenNotReceived",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InsufficientTokenBalance",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InsufficientAllowance",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "FeeTransferFailed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "BurnTransferFailed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "TreasuryTransferFailed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "CannotRecoverPaymentToken",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RecoverFailed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NoNative",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "IndexOutOfRange",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidName",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NameTooLong",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidSymbol",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SymbolTooLong",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "SymbolExists",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ExchangePaused",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NoNativeCoin",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "AmountTooSmall",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InsufficientStock",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidRate",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidAmount",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "WithdrawFailed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NoUtilityToken",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotFactory",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "FactoryAlreadySet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UseDeployFunction",
+    "inputs": []
+  }
+]
