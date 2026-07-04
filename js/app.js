@@ -1,8 +1,65 @@
 /* global ethers, CHAINS, DEFAULT_CHAIN_ID, getEnabledChains, getChain */
 
 let provider, signer, account, currentChainId;
-let factoryAbi, exchangeAbi, erc20Abi;
+let factoryAbi, exchangeAbi, erc20Abi, knownErrorsAbi, errorsInterface;
 let quotedFee = null; // { nativeFee: BigInt, lftFee: BigInt }
+
+// Pesan ramah Bahasa Indonesia untuk custom error kontrak (ERC20Max + LFTFactory + Exchange).
+const ERROR_MESSAGES = {
+  InvalidOwner: "Alamat owner tidak valid.",
+  InvalidSupply: "Initial Supply tidak boleh 0.",
+  InvalidMaxSupply: "Max Supply harus lebih besar atau sama dengan Initial Supply.",
+  BuyTaxLimit: "Buy Tax melebihi batas maksimum 25%.",
+  SellTaxLimit: "Sell Tax melebihi batas maksimum 25%.",
+  TransferTaxLimit: "Transfer Tax melebihi batas maksimum 25%.",
+  InvalidSecurityConfig: "Konfigurasi keamanan tidak valid — periksa Max Wallet/Max TX (%) harus > 0 kalau diaktifkan.",
+  InvalidTaxShares: "Total distribusi pajak (Burn+Marketing+...+Charity) harus tepat 100%.",
+  InvalidMarketingWallet: "Marketing Wallet wajib diisi karena Marketing Share > 0.",
+  InvalidDevelopmentWallet: "Development Wallet wajib diisi karena Development Share > 0.",
+  InvalidTreasuryWallet: "Treasury Wallet wajib diisi karena Treasury Share > 0.",
+  InvalidLiquidityWallet: "Liquidity Wallet wajib diisi karena Liquidity Share > 0.",
+  InvalidBuybackWallet: "Buyback Wallet wajib diisi karena Buyback Share > 0.",
+  InvalidCharityWallet: "Charity Wallet wajib diisi karena Charity Share > 0.",
+  InvalidName: "Nama token tidak valid.",
+  NameTooLong: "Nama token terlalu panjang.",
+  InvalidSymbol: "Simbol token tidak valid.",
+  SymbolTooLong: "Simbol token terlalu panjang (maks 11 karakter).",
+  SymbolExists: "Simbol ini sudah dipakai token lain. Coba simbol lain.",
+  FactoryPaused: "Factory sedang dipause oleh admin. Coba lagi nanti.",
+  InsufficientNativeFee: "EVOZ yang dikirim kurang dari biaya deploy. Klik ulang \"Hitung Biaya Deploy\".",
+  NotNativePayment: "Metode pembayaran NATIVE tidak aktif di factory ini.",
+  PaymentDisabled: "Metode pembayaran ini sedang dinonaktifkan.",
+};
+
+function friendlyErrorName(name) {
+  return ERROR_MESSAGES[name] || `Kontrak menolak transaksi (${name}).`;
+}
+
+/** Cari hex revert-data di berbagai bentuk error ethers v6 / provider wallet. */
+function extractRevertData(err) {
+  const tryPaths = [
+    err && err.data,
+    err && err.info && err.info.error && err.info.error.data,
+    err && err.error && err.error.data,
+  ];
+  for (const v of tryPaths) {
+    if (typeof v === "string" && v.startsWith("0x") && v.length >= 10) return v;
+    if (v && typeof v === "object" && typeof v.data === "string") return v.data;
+  }
+  return null;
+}
+
+function decodeError(err) {
+  try {
+    const data = extractRevertData(err);
+    if (data && errorsInterface) {
+      const parsed = errorsInterface.parseError(data);
+      if (parsed) return friendlyErrorName(parsed.name);
+    }
+  } catch (e) {}
+  if (err && err.code === "ACTION_REJECTED") return "Transaksi dibatalkan di wallet.";
+  return (err && (err.shortMessage || err.reason || err.message)) || "Terjadi kesalahan tidak diketahui.";
+}
 
 const $ = (id) => document.getElementById(id);
 
@@ -21,11 +78,13 @@ function toast(msg, kind) {
 // Init
 // -------------------------------------------------------------------------
 async function init() {
-  [factoryAbi, exchangeAbi, erc20Abi] = await Promise.all([
+  [factoryAbi, exchangeAbi, erc20Abi, knownErrorsAbi] = await Promise.all([
     fetch("js/abi/LFTFactory.json").then((r) => r.json()),
     fetch("js/abi/LaunchFutureExchange.json").then((r) => r.json()),
     fetch("js/abi/ERC20Min.json").then((r) => r.json()),
+    fetch("js/abi/KnownErrors.json").then((r) => r.json()),
   ]);
+  errorsInterface = new ethers.Interface(knownErrorsAbi);
 
   renderChainGrid();
   fillContractFields();
@@ -228,7 +287,15 @@ function buildConfig() {
 
   const owner = addrOr("tOwner", account);
   const initialSupply = ethers.parseUnits(val("sInitial") || "0", 18);
-  const maxSupply = ethers.parseUnits(val("sMax") || "0", 18);
+  if (initialSupply === 0n) throw new Error("Initial Supply tidak boleh 0.");
+
+  // Kontrak MEWAJIBKAN maxSupply >= initialSupply (0 bukan berarti "tanpa batas").
+  // Kalau kosong / 0, kunci supply tetap (maxSupply = initialSupply).
+  const maxSupplyRaw = val("sMax");
+  let maxSupply = maxSupplyRaw === "" || maxSupplyRaw === "0" ? initialSupply : ethers.parseUnits(maxSupplyRaw, 18);
+  if (maxSupply < initialSupply) {
+    throw new Error("Max Supply harus lebih besar atau sama dengan Initial Supply.");
+  }
 
   // Tax shares must always total exactly 100 per contract rule.
   let shares = {
@@ -304,7 +371,7 @@ async function quoteDeployFee() {
     $("btnDeploy").disabled = false;
     toast("Biaya deploy berhasil dihitung.", "ok");
   } catch (e) {
-    toast(e.shortMessage || e.message || "Gagal menghitung biaya", "err");
+    toast(decodeError(e), "err");
   }
 }
 
@@ -317,24 +384,40 @@ async function deployToken() {
     const { config, metadata } = buildConfig();
     log("Menyiapkan konfigurasi token…", "pending");
 
-    const factory = factoryWriteContract();
-    log(`Mengirim transaksi deployWithNative (bayar ${ethers.formatEther(quotedFee.nativeFee)} native)…`, "pending");
+    const chain = getChain(currentChainId);
 
+    // Simulasi dulu langsung ke RPC publik (bukan lewat wallet) supaya kalau kontrak
+    // menolak, kita dapat nama error yang jelas — bukan "missing revert data".
+    log("Mensimulasikan transaksi ke RPC EVOZ…", "pending");
+    try {
+      const simFactory = new ethers.Contract(chain.contracts.factory, factoryAbi, readProvider(currentChainId));
+      await simFactory.deployWithNative.staticCall(config, metadata, {
+        from: account,
+        value: quotedFee.nativeFee,
+      });
+    } catch (simErr) {
+      const msg = decodeError(simErr);
+      log("Simulasi gagal: " + msg, "err");
+      toast(msg, "err");
+      return;
+    }
+    log("Simulasi berhasil, mengirim transaksi…", "ok");
+
+    const factory = factoryWriteContract();
     const tx = await factory.deployWithNative(config, metadata, { value: quotedFee.nativeFee });
     log("Tx terkirim: " + tx.hash, "pending");
 
     const receipt = await tx.wait();
     log("Terkonfirmasi di block " + receipt.blockNumber, "ok");
-
-    const chain = getChain(currentChainId);
     log("Lihat transaksi: " + chain.blockExplorerUrls[0] + "/tx/" + tx.hash, "ok");
 
     toast("Token berhasil dideploy! 🎉", "ok");
     $("btnDeploy").disabled = true;
     quotedFee = null;
   } catch (e) {
-    log("Gagal: " + (e.shortMessage || e.reason || e.message || "unknown error"), "err");
-    toast("Deploy gagal. Cek log di bawah.", "err");
+    const msg = decodeError(e);
+    log("Gagal: " + msg, "err");
+    toast(msg, "err");
   }
 }
 
