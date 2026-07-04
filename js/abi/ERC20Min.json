@@ -1,0 +1,10 @@
+[
+  {"type":"function","stateMutability":"view","name":"name","inputs":[],"outputs":[{"type":"string"}]},
+  {"type":"function","stateMutability":"view","name":"symbol","inputs":[],"outputs":[{"type":"string"}]},
+  {"type":"function","stateMutability":"view","name":"decimals","inputs":[],"outputs":[{"type":"uint8"}]},
+  {"type":"function","stateMutability":"view","name":"totalSupply","inputs":[],"outputs":[{"type":"uint256"}]},
+  {"type":"function","stateMutability":"view","name":"balanceOf","inputs":[{"type":"address","name":"account"}],"outputs":[{"type":"uint256"}]},
+  {"type":"function","stateMutability":"view","name":"owner","inputs":[],"outputs":[{"type":"address"}]},
+  {"type":"function","stateMutability":"nonpayable","name":"transfer","inputs":[{"type":"address","name":"to"},{"type":"uint256","name":"amount"}],"outputs":[{"type":"bool"}]},
+  {"type":"function","stateMutability":"nonpayable","name":"approve","inputs":[{"type":"address","name":"spender"},{"type":"uint256","name":"amount"}],"outputs":[{"type":"bool"}]}
+]
