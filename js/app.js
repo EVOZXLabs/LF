@@ -279,6 +279,64 @@ function sumShares() {
          num("shLiquidity") + num("shBuyback") + num("shCharity");
 }
 
+/**
+ * Replikasi semua require/revert di LFTFactoryDeployLib.validateConfig +
+ * ERC20MaxTaxLib.validateConfig + ERC20MaxSecurityLib.validateSecurityConfig.
+ * Tujuannya: tangkap kesalahan SEBELUM ke chain, karena RPC EVOZ saat ini
+ * tidak selalu mengembalikan alasan revert (return data kosong).
+ */
+function clientPreValidate(config) {
+  const nameLen = config.name.length;
+  if (nameLen < 2 || nameLen > 64) throw new Error("Nama token harus 2–64 karakter.");
+
+  const symLen = config.symbol.length;
+  if (symLen < 2 || symLen > 12) throw new Error("Simbol token harus 2–12 karakter.");
+
+  if (config.supply.initialSupply === 0n) throw new Error("Initial Supply tidak boleh 0.");
+  if (config.supply.maxSupply < config.supply.initialSupply)
+    throw new Error("Max Supply harus lebih besar atau sama dengan Initial Supply.");
+
+  // Batas pajak di level FACTORY adalah 10%, lebih ketat dari batas di level token (25%).
+  if (config.taxes.buyTax > 10) throw new Error("Buy Tax maksimum 10% (dibatasi oleh factory).");
+  if (config.taxes.sellTax > 10) throw new Error("Sell Tax maksimum 10% (dibatasi oleh factory).");
+  if (config.taxes.transferTax > 10) throw new Error("Transfer Tax maksimum 10% (dibatasi oleh factory).");
+
+  const shareTotal =
+    config.taxes.burnShare + config.taxes.marketingShare + config.taxes.developmentShare +
+    config.taxes.treasuryShare + config.taxes.liquidityShare + config.taxes.buybackShare + config.taxes.charityShare;
+  if (shareTotal !== 100) throw new Error(`Total distribusi pajak harus tepat 100%. Sekarang: ${shareTotal}%.`);
+
+  const zero = "0x0000000000000000000000000000000000000000";
+  if (config.taxes.marketingShare > 0 && config.taxes.marketingWallet === zero) throw new Error("Marketing Wallet wajib diisi.");
+  if (config.taxes.developmentShare > 0 && config.taxes.developmentWallet === zero) throw new Error("Development Wallet wajib diisi.");
+  if (config.taxes.treasuryShare > 0 && config.taxes.treasuryWallet === zero) throw new Error("Treasury Wallet wajib diisi.");
+  if (config.taxes.liquidityShare > 0 && config.taxes.liquidityWallet === zero) throw new Error("Liquidity Wallet wajib diisi.");
+  if (config.taxes.buybackShare > 0 && config.taxes.buybackWallet === zero) throw new Error("Buyback Wallet wajib diisi.");
+  if (config.taxes.charityShare > 0 && config.taxes.charityWallet === zero) throw new Error("Charity Wallet wajib diisi.");
+
+  if (config.security.maxWalletEnabled && config.security.maxWalletPercent === 0)
+    throw new Error("Batas Max Wallet aktif tapi persennya 0 — isi Max Wallet (%) atau matikan togglenya.");
+  if (config.security.maxTxEnabled && config.security.maxTxPercent === 0)
+    throw new Error("Batas Max TX aktif tapi persennya 0 — isi Max TX (%) atau matikan togglenya.");
+}
+
+/** Dump detail error mentah ke log, biar kalau masih gagal, penyebab aslinya kelihatan. */
+function safeStringify(obj) {
+  const seen = new WeakSet();
+  try {
+    return JSON.stringify(obj, (k, v) => {
+      if (typeof v === "bigint") return v.toString() + "n";
+      if (typeof v === "object" && v !== null) {
+        if (seen.has(v)) return "[circular]";
+        seen.add(v);
+      }
+      return v;
+    }, 2);
+  } catch (e) {
+    return String(obj);
+  }
+}
+
 function buildConfig() {
   if (!account) throw new Error("Hubungkan wallet dulu.");
   const name = val("tName");
@@ -382,15 +440,22 @@ async function deployToken() {
     if (!quotedFee) throw new Error("Hitung biaya deploy dulu.");
 
     const { config, metadata } = buildConfig();
-    log("Menyiapkan konfigurasi token…", "pending");
+    log("Memeriksa konfigurasi di HP (client-side)…", "pending");
+    clientPreValidate(config);
+    log("Konfigurasi valid ✓", "ok");
 
     const chain = getChain(currentChainId);
+    const simFactory = new ethers.Contract(chain.contracts.factory, factoryAbi, readProvider(currentChainId));
 
-    // Simulasi dulu langsung ke RPC publik (bukan lewat wallet) supaya kalau kontrak
-    // menolak, kita dapat nama error yang jelas — bukan "missing revert data".
+    // Ambil ulang deploy fee TERKINI langsung sebelum kirim, supaya value tx
+    // pasti sama persis dengan yang dibutuhkan kontrak saat ini (menghindari
+    // race condition kalau fee sempat berubah sejak "Hitung Biaya Deploy").
+    log("Mengambil ulang biaya deploy terkini…", "pending");
+    const [freshFee] = await simFactory.getDeployFee("NATIVE");
+    quotedFee.nativeFee = freshFee;
+
     log("Mensimulasikan transaksi ke RPC EVOZ…", "pending");
     try {
-      const simFactory = new ethers.Contract(chain.contracts.factory, factoryAbi, readProvider(currentChainId));
       await simFactory.deployWithNative.staticCall(config, metadata, {
         from: account,
         value: quotedFee.nativeFee,
@@ -398,6 +463,15 @@ async function deployToken() {
     } catch (simErr) {
       const msg = decodeError(simErr);
       log("Simulasi gagal: " + msg, "err");
+      log("--- detail teknis (untuk laporan bug) ---", "err");
+      log(safeStringify({
+        message: simErr && simErr.message,
+        shortMessage: simErr && simErr.shortMessage,
+        code: simErr && simErr.code,
+        data: simErr && simErr.data,
+        info: simErr && simErr.info,
+        error: simErr && simErr.error,
+      }), "err");
       toast(msg, "err");
       return;
     }
@@ -417,6 +491,10 @@ async function deployToken() {
   } catch (e) {
     const msg = decodeError(e);
     log("Gagal: " + msg, "err");
+    log(safeStringify({
+      message: e && e.message, shortMessage: e && e.shortMessage, code: e && e.code,
+      data: e && e.data, info: e && e.info, error: e && e.error,
+    }), "err");
     toast(msg, "err");
   }
 }
