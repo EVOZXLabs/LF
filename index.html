@@ -65,15 +65,15 @@
 
     <div class="card">
       <h3>Supply</h3>
-      <p class="hint">Jumlah token awal yang akan dicetak ke wallet owner.</p>
+      <p class="hint">Jumlah token awal yang akan dicetak ke wallet owner. Max Supply wajib ≥ Initial Supply (kontrak akan menolak kalau lebih kecil) — kosongkan saja kalau supply Anda tetap/fixed.</p>
       <div class="row2">
         <div class="field">
           <label>Initial Supply</label>
           <input type="number" id="sInitial" placeholder="1000000" min="0">
         </div>
         <div class="field">
-          <label>Max Supply (0 = tanpa batas)</label>
-          <input type="number" id="sMax" placeholder="0" min="0">
+          <label>Max Supply (kosongkan = sama dengan Initial Supply)</label>
+          <input type="number" id="sMax" placeholder="kosongkan = sama dengan Initial Supply" min="0">
         </div>
       </div>
       <div class="switch-row">
