@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<title>LaunchFuture — Token Generator</title>
+<meta name="description" content="Deploy token ERC20 kustom Anda sendiri di EVOZ Mainnet, langsung dari HP.">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a0d12">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">LF</div>
+    <div class="brand-text">LaunchFuture<small>token generator</small></div>
+  </div>
+  <button class="wallet-btn" id="walletBtn"><span class="dot"></span><span id="walletBtnText">Hubungkan</span></button>
+</div>
+
+<div class="status-strip" id="statusStrip">
+  <span class="seg">jaringan: <span class="mono warn" id="stripChain">memeriksa…</span></span>
+  <span class="seg">deploy fee: <span class="mono" id="stripFee">—</span></span>
+  <span class="seg">total token dibuat: <span class="mono ok" id="stripTotal">—</span></span>
+</div>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eyebrow">EVOZ Mainnet · chain id 805</div>
+    <h1>Buat token Anda sendiri,<br>langsung dari HP.</h1>
+    <p>Isi konfigurasi, konfirmasi biaya deploy, dan token ERC20 kustom Anda langsung hidup di EVOZ Mainnet lewat smart contract LFTFactory. Multichain (BSC, ETH, dll) akan menyusul.</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="create">Buat Token</button>
+    <button class="tab" data-tab="mytokens">Token Saya</button>
+    <button class="tab" data-tab="network">Jaringan</button>
+  </div>
+
+  <!-- ===================== TAB: CREATE ===================== -->
+  <div class="panel active" id="panel-create">
+
+    <div class="card">
+      <h3>Informasi Dasar</h3>
+      <p class="hint">Nama & simbol token akan tercatat permanen di blockchain.</p>
+      <div class="field">
+        <label>Nama Token</label>
+        <input type="text" id="tName" placeholder="mis. Evoz Rocket" maxlength="40">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Simbol</label>
+          <input type="text" id="tSymbol" placeholder="mis. ROCKET" maxlength="11" style="text-transform:uppercase">
+        </div>
+        <div class="field">
+          <label>Owner Token</label>
+          <input type="text" id="tOwner" placeholder="0x… (kosongkan = wallet saya)">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Supply</h3>
+      <p class="hint">Jumlah token awal yang akan dicetak ke wallet owner.</p>
+      <div class="row2">
+        <div class="field">
+          <label>Initial Supply</label>
+          <input type="number" id="sInitial" placeholder="1000000" min="0">
+        </div>
+        <div class="field">
+          <label>Max Supply (0 = tanpa batas)</label>
+          <input type="number" id="sMax" placeholder="0" min="0">
+        </div>
+      </div>
+      <div class="switch-row">
+        <div><div class="label">Mintable</div><div class="sub">Bisa cetak token tambahan nanti</div></div>
+        <label class="switch"><input type="checkbox" id="sMintable"><span class="slider"></span></label>
+      </div>
+      <div class="switch-row">
+        <div><div class="label">Burnable</div><div class="sub">Holder bisa membakar token</div></div>
+        <label class="switch"><input type="checkbox" id="sBurnable" checked><span class="slider"></span></label>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Keamanan</h3>
+      <p class="hint">Proteksi anti-bot & pembatasan transaksi saat listing.</p>
+      <div class="switch-row">
+        <div><div class="label">Anti-Bot</div><div class="sub">Blokir bot di blok-blok awal</div></div>
+        <label class="switch"><input type="checkbox" id="secAntiBot"><span class="slider"></span></label>
+      </div>
+      <div class="switch-row">
+        <div><div class="label">Blacklist</div><div class="sub">Owner bisa blokir wallet tertentu</div></div>
+        <label class="switch"><input type="checkbox" id="secBlacklist"><span class="slider"></span></label>
+      </div>
+      <div class="switch-row">
+        <div><div class="label">Whitelist</div><div class="sub">Hanya wallet whitelist yang bisa transaksi</div></div>
+        <label class="switch"><input type="checkbox" id="secWhitelist"><span class="slider"></span></label>
+      </div>
+      <div class="switch-row">
+        <div><div class="label">Trading Delay</div><div class="sub">Jeda waktu sebelum trading dibuka</div></div>
+        <label class="switch"><input type="checkbox" id="secTradingDelay"><span class="slider"></span></label>
+      </div>
+      <div class="field" style="margin-top:12px;">
+        <label>Anti-Bot Blocks</label>
+        <input type="number" id="secAntiBotBlocks" placeholder="0" min="0">
+      </div>
+      <div class="field">
+        <label>Trading Delay (detik)</label>
+        <input type="number" id="secTradingDelaySeconds" placeholder="0" min="0">
+      </div>
+      <div class="switch-row">
+        <div><div class="label">Batas Max Wallet</div><div class="sub">% max supply per wallet</div></div>
+        <label class="switch"><input type="checkbox" id="secMaxWalletEnabled"><span class="slider"></span></label>
+      </div>
+      <div class="field">
+        <label>Max Wallet (%)</label>
+        <input type="number" id="secMaxWalletPercent" placeholder="mis. 2" min="0" max="100" step="1">
+      </div>
+      <div class="switch-row">
+        <div><div class="label">Batas Max TX</div><div class="sub">% max supply per transaksi</div></div>
+        <label class="switch"><input type="checkbox" id="secMaxTxEnabled"><span class="slider"></span></label>
+      </div>
+      <div class="field">
+        <label>Max TX (%)</label>
+        <input type="number" id="secMaxTxPercent" placeholder="mis. 1" min="0" max="100" step="1">
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Pajak Transaksi</h3>
+      <p class="hint">Semua nilai dalam basis poin ÷100 (mis. isi 5 = 5%). Total share pajak harus 100%.</p>
+      <div class="switch-row">
+        <div><div class="label">Pajak Beli</div></div>
+        <label class="switch"><input type="checkbox" id="txBuyEnabled"><span class="slider"></span></label>
+      </div>
+      <div class="field"><label>Buy Tax (%)</label><input type="number" id="txBuy" placeholder="0" min="0" max="25" step="1"></div>
+      <div class="switch-row">
+        <div><div class="label">Pajak Jual</div></div>
+        <label class="switch"><input type="checkbox" id="txSellEnabled"><span class="slider"></span></label>
+      </div>
+      <div class="field"><label>Sell Tax (%)</label><input type="number" id="txSell" placeholder="0" min="0" max="25" step="1"></div>
+      <div class="switch-row">
+        <div><div class="label">Pajak Transfer</div></div>
+        <label class="switch"><input type="checkbox" id="txTransferEnabled"><span class="slider"></span></label>
+      </div>
+      <div class="field"><label>Transfer Tax (%)</label><input type="number" id="txTransfer" placeholder="0" min="0" max="25" step="1"></div>
+
+      <div class="section-title">Distribusi Pajak (opsional, total ≤ 100%)</div>
+      <div class="row2">
+        <div class="field"><label>Burn (%)</label><input type="number" id="shBurn" placeholder="0"></div>
+        <div class="field"><label>Marketing (%)</label><input type="number" id="shMarketing" placeholder="0"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Development (%)</label><input type="number" id="shDevelopment" placeholder="0"></div>
+        <div class="field"><label>Treasury (%)</label><input type="number" id="shTreasury" placeholder="0"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Liquidity (%)</label><input type="number" id="shLiquidity" placeholder="0"></div>
+        <div class="field"><label>Buyback (%)</label><input type="number" id="shBuyback" placeholder="0"></div>
+      </div>
+      <div class="field"><label>Charity (%)</label><input type="number" id="shCharity" placeholder="0"></div>
+
+      <div class="section-title">Wallet Penerima Pajak</div>
+      <div class="field"><label>Marketing Wallet</label><input type="text" id="wMarketing" placeholder="0x… (kosongkan = wallet saya)"></div>
+      <div class="field"><label>Development Wallet</label><input type="text" id="wDevelopment" placeholder="0x… (kosongkan = wallet saya)"></div>
+      <div class="field"><label>Treasury Wallet</label><input type="text" id="wTreasury" placeholder="0x… (kosongkan = wallet saya)"></div>
+      <div class="field"><label>Liquidity Wallet</label><input type="text" id="wLiquidity" placeholder="0x… (kosongkan = wallet saya)"></div>
+      <div class="field"><label>Buyback Wallet</label><input type="text" id="wBuyback" placeholder="0x… (kosongkan = wallet saya)"></div>
+      <div class="field"><label>Charity Wallet</label><input type="text" id="wCharity" placeholder="0x… (kosongkan = wallet saya)"></div>
+    </div>
+
+    <div class="card">
+      <h3>Metadata Sosial</h3>
+      <p class="hint">Tampil di explorer & listing pihak ketiga. Semua opsional.</p>
+      <div class="field"><label>Website</label><input type="text" id="mWebsite" placeholder="https://…"></div>
+      <div class="row2">
+        <div class="field"><label>Telegram</label><input type="text" id="mTelegram" placeholder="https://t.me/…"></div>
+        <div class="field"><label>Twitter/X</label><input type="text" id="mTwitter" placeholder="https://x.com/…"></div>
+      </div>
+      <div class="field"><label>Logo URL</label><input type="text" id="mLogo" placeholder="https://…/logo.png"></div>
+    </div>
+
+    <div class="card">
+      <h3>Deploy</h3>
+      <div class="fee-box">
+        <span>Biaya deploy (native EVOZ)</span>
+        <span class="val" id="feeNative">—</span>
+      </div>
+      <div class="fee-box">
+        <span>Setara dalam LFT</span>
+        <span class="val" id="feeLFT">—</span>
+      </div>
+      <button class="btn" id="btnQuote">1. Hitung Biaya Deploy</button>
+      <button class="btn" id="btnDeploy" style="margin-top:10px;" disabled>2. Deploy Token</button>
+      <div class="deploy-log" id="deployLog" style="display:none;"></div>
+    </div>
+
+  </div>
+
+  <!-- ===================== TAB: MY TOKENS ===================== -->
+  <div class="panel" id="panel-mytokens">
+    <div class="card">
+      <h3>Token yang Anda Buat</h3>
+      <p class="hint">Diambil langsung dari LFTFactory di jaringan aktif.</p>
+      <button class="btn secondary small" id="btnRefreshTokens">Refresh</button>
+      <div id="myTokensList" style="margin-top:14px;"></div>
+    </div>
+  </div>
+
+  <!-- ===================== TAB: NETWORK ===================== -->
+  <div class="panel" id="panel-network">
+    <div class="card">
+      <h3>Jaringan Didukung</h3>
+      <p class="hint">Roadmap multichain LaunchFuture. Sekarang aktif di EVOZ, jaringan lain menyusul.</p>
+      <div class="chain-grid" id="chainGrid"></div>
+    </div>
+    <div class="card">
+      <h3>Kontrak EVOZ Mainnet</h3>
+      <div class="field"><label>LFTFactory</label><input type="text" readonly class="mono" id="cFactory"></div>
+      <div class="field"><label>LFTDeployer</label><input type="text" readonly class="mono" id="cDeployer"></div>
+      <div class="field"><label>LaunchFutureExchange</label><input type="text" readonly class="mono" id="cExchange"></div>
+      <div class="field"><label>LFT Token</label><input type="text" readonly class="mono" id="cLft"></div>
+      <div class="field"><label>Treasury</label><input type="text" readonly class="mono" id="cTreasury"></div>
+    </div>
+  </div>
+
+  <div class="footer-note">LaunchFuture Token Generator · dijalankan langsung dari browser Anda, tanpa server backend. Selalu periksa ulang konfigurasi sebelum deploy — transaksi di blockchain tidak bisa dibatalkan.</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.2/dist/ethers.umd.min.js"></script>
+<script src="js/chains.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
